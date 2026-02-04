@@ -1,0 +1,26 @@
+{
+    "id": "21872991",
+    "path": "G:/visualizationPackage/visualPlotFunctions.R",
+    "project_path": null,
+    "type": "r_source",
+    "hash": "2505920683",
+    "contents": "",
+    "dirty": false,
+    "created": 1770045083327.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "579,20",
+        "scrollLine": "567"
+    },
+    "folds": "9|2|77|0|\n80|2|264|0|\n267|2|334|0|\n337|2|431|0|\n434|2|497|0|\n",
+    "lastKnownWriteTime": 1770045468,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1770045466967,
+    "read_only": false,
+    "read_only_alternatives": []
+}

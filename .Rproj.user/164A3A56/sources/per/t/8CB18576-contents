@@ -1,0 +1,140 @@
+#!/usr/bin/env Rscript
+# ============================================================================
+# Package Setup Script
+# ============================================================================
+# Run this script to set up your R package structure
+# Usage: source("setup_package.R")
+# ============================================================================
+
+# Check if usethis is installed
+if (!requireNamespace("usethis", quietly = TRUE)) {
+  stop("Please install 'usethis' package first: install.packages('usethis')")
+}
+
+if (!requireNamespace("devtools", quietly = TRUE)) {
+  stop("Please install 'devtools' package first: install.packages('devtools')")
+}
+
+cat("========================================\n")
+cat("R Package Setup Script\n")
+cat("========================================\n\n")
+
+# Get package name
+package_name <- readline(prompt = "Enter package name (e.g., 'myVizPackage'): ")
+if (package_name == "") {
+  stop("Package name cannot be empty")
+}
+
+# Get author name
+author_name <- readline(prompt = "Enter author name: ")
+if (author_name == "") {
+  author_name <- "Your Name"
+}
+
+# Get author email
+author_email <- readline(prompt = "Enter author email: ")
+if (author_email == "") {
+  author_email <- "your.email@example.com"
+}
+
+# Get GitHub username (optional)
+github_user <- readline(prompt = "Enter GitHub username (optional, press Enter to skip): ")
+
+cat("\nCreating package structure...\n")
+
+# Create package
+usethis::create_package(package_name, open = FALSE)
+
+# Set working directory
+setwd(package_name)
+
+cat("Package directory created: ", getwd(), "\n\n")
+
+# Add dependencies
+cat("Adding dependencies...\n")
+dependencies <- c(
+  "ggplot2", "ggpubr", "ggalluvial", "ggrepel", "rstatix",
+  "dplyr", "tidyr", "colorspace", "scales", "enrichplot",
+  "ggforestplot", "broom"
+)
+
+for (pkg in dependencies) {
+  cat("  Adding", pkg, "...\n")
+  usethis::use_package(pkg, type = "Imports")
+}
+
+# Optional dependencies
+cat("\nAdding optional dependencies...\n")
+usethis::use_package("FSA", type = "Suggests")
+usethis::use_package("testthat", type = "Suggests")
+usethis::use_package("DOSE", type = "Suggests")
+usethis::use_package("knitr", type = "Suggests")
+usethis::use_package("rmarkdown", type = "Suggests")
+
+# Add license
+cat("\nAdding MIT license...\n")
+usethis::use_mit_license(author_name)
+
+# Add README
+cat("Creating README...\n")
+usethis::use_readme_rmd()
+
+# Add test infrastructure
+cat("Setting up test infrastructure...\n")
+usethis::use_testthat()
+
+# Add GitHub Actions (if GitHub user provided)
+if (github_user != "") {
+  cat("Adding GitHub Actions...\n")
+  usethis::use_github_action("check-standard")
+}
+
+# Update DESCRIPTION with author info
+desc_file <- file.path("DESCRIPTION")
+desc_content <- readLines(desc_file)
+desc_content <- gsub("Your Name", author_name, desc_content)
+desc_content <- gsub("your.email@example.com", author_email, desc_content)
+desc_content <- gsub("yourPackageName", package_name, desc_content)
+
+if (github_user != "") {
+  # Add URL and BugReports
+  url_line <- paste0("URL: https://github.com/", github_user, "/", package_name)
+  bug_line <- paste0("BugReports: https://github.com/", github_user, "/", package_name, "/issues")
+  
+  # Find where to insert
+  license_idx <- grep("^License:", desc_content)
+  if (length(license_idx) > 0) {
+    desc_content <- c(
+      desc_content[1:license_idx],
+      url_line,
+      bug_line,
+      desc_content[(license_idx + 1):length(desc_content)]
+    )
+  }
+}
+
+writeLines(desc_content, desc_file)
+
+cat("\n========================================\n")
+cat("Package setup complete!\n")
+cat("========================================\n\n")
+cat("Next steps:\n")
+cat("1. Copy your R functions from visualPlotFunctions.R to R/ directory\n")
+cat("   - Split into multiple files (plot-boxplots.R, plot-specialized.R, etc.)\n")
+cat("2. Run: devtools::document() to generate documentation\n")
+cat("3. Run: devtools::check() to verify package\n")
+cat("4. Initialize git repository:\n")
+cat("   git init\n")
+cat("   git add .\n")
+cat("   git commit -m 'Initial commit'\n")
+if (github_user != "") {
+  cat("5. Create GitHub repository and push:\n")
+  cat("   git remote add origin https://github.com/", github_user, "/", package_name, ".git\n", sep = "")
+  cat("   git push -u origin main\n")
+  cat("6. Users can install with:\n")
+  cat("   devtools::install_github('", github_user, "/", package_name, "')\n", sep = "")
+} else {
+  cat("5. Create GitHub repository and push your code\n")
+  cat("6. Users can install with: devtools::install_github('username/", package_name, "')\n", sep = "")
+}
+cat("\n")
