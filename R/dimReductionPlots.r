@@ -100,6 +100,25 @@ plot_pca <- function(data, feature_list, title = "", scale_data = TRUE,
 # ============================================================================
 # TSNE plots
 # ============================================================================
+#' Create a T-distributed stochastic neighbor embedding plot
+#'
+#' Creates a T-distributed stochastic neighbor embedding plot using
+#' the M3C library tsne function
+#'
+#' @param data A numeric data frame or matrix. Rows are samples, columns are features
+#' @param title Character string. Plot title (default: "")
+#' @param feature Named array. Class labels of the samples that will be 
+#' shown under different colors in the plot.
+#'
+#' @return A ggplot2 object
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' plot_pca(data = expression_matrix,
+#'          feature_list = list(group = sample_groups, batch = sample_batches))
+#' }
+
 plot_tsne <- function(dataframe,title="",feature){
   library(M3C)
   tsnePlot<-tsne(dataframe,labels=feature,axistextsize = 6,dotsize = 2,text = colnames(dataframe),legendtitle = title,textlabelsize = 3)
