@@ -13,42 +13,52 @@ knitr::opts_chunk$set(
 )
 ```
 
-# visualPlots
+# visualPlots R package
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of visualPlots is to ...
+visualPlots is an R package that provides tools for creating visualizations. It is designed to be easy to use and flexible, allowing 
+users to create a wide variety of plots and charts from quantitative and qualitative data. The package includes functions for creating 
+scatter plots, line graphs, bar charts, and more, as well as tools for customizing the appearance of your plots.
 
 ## Installation
 
 You can install the development version of visualPlots like so:
 
-``` r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+``` {r}
+devtools::install_github("jumagari14/visualPlots")
 ```
 
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+You can find below examples of basic visualizations that can be created using the visualPlots package. For more detailed examples and documentation, 
+please refer to the package's GitHub repository.:
 
+### Boxplots comparing quantitative data across groups + statistical test
 ```{r example}
 library(visualPlots)
-## basic example code
+data(iris)
+plot_boxplot_stats(data = iris, x = "Species", y = "Sepal.Length",parametric = TRUE,
+                  add_points = TRUE, color_palette="Set3",show_symbols = TRUE,
+                  show_posthoc = TRUE)
+
+```
+### Scatter plot with regression line and confidence interval
+```{r example}
+library(visualPlots)
+data(iris)
+plot_correlation(data = iris, x = "Sepal.Length", y = "Petal.Length", 
+                         add_regression_line = TRUE, add_confidence_interval = TRUE,
+                         colorPalette="Set1", title = "Scatter Plot with Regression Line",
+                         xlab = "Sepal Length", ylab = "Petal Length")
+```
+### Bar plot with error bars
+```{r example}
+library(visualPlots)
+data(iris)
+plot_stacked_bar(data = iris, x = "Species", fill = "Species", y = "Sepal.Length", 
+                 add_error_bars = TRUE, colorPalette="Set2",
+                 title = "Bar Plot with Error Bars", xlab = "Species", ylab = "Mean Sepal Length")
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
-
-```{r cars}
-summary(cars)
-```
-
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this.
-
-You can also embed plots, for example:
-
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
-
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
