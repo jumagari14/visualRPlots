@@ -187,7 +187,7 @@ plot_boxplot_stats <- function(data, x_var, y_var, parametric = NULL,
 
   # Add statistical annotations
   if (show_posthoc && is_multivariate && !is.null(test_results$posthoc)) {
-    p <- .add_posthoc_annotations(p, data_prep, x_var_clean, y_var_clean,
+    p <- add_posthoc_annotations(p, data_prep, x_var_clean, y_var_clean,
                                    test_results$posthoc, parametric,
                                    show_symbols, step_increase)
   } else if (!show_posthoc) {
@@ -485,13 +485,54 @@ plot_forest <- function(model_list, adjust_pvals = FALSE, pval_cutoff = 0.05,
   # Clean term names
   tidy_results$term <- gsub("`", "", tidy_results$term)
 
-  # Create forest plot
-  p <- ggforestplot::forestplot(df = tidy_results,
-                                 name = term,
-                                 se = std.error,
-                                 pvalue = p.value,
-                                 colour = trait,
-                                 psignif = pval_cutoff)
+  # Create forest plot using ggplot2 only (replaces ggforestplot::forestplot)
+  # - compute 95% confidence intervals if not provided
+  if (!all(c("ci.low", "ci.high") %in% colnames(tidy_results))) {
+    if (all(c("estimate", "std.error") %in% colnames(tidy_results))) {
+      z <- stats::qnorm(0.975)
+      tidy_results$ci.low <- tidy_results$estimate - z * tidy_results$std.error
+      tidy_results$ci.high <- tidy_results$estimate + z * tidy_results$std.error
+    } else if (all(c("conf.low", "conf.high") %in% colnames(tidy_results))) {
+      tidy_results$ci.low <- tidy_results$conf.low
+      tidy_results$ci.high <- tidy_results$conf.high
+      if (!"estimate" %in% colnames(tidy_results)) {
+        tidy_results$estimate <- (tidy_results$ci.low + tidy_results$ci.high) / 2
+      }
+    } else {
+      stop("'tidy_results' must contain 'estimate' and 'std.error' or 'conf.low' and 'conf.high'")
+    }
+  }
+
+  # significance flag and formatted p-value for display
+  tidy_results$signif_flag <- ifelse(is.na(tidy_results$p.value), NA,
+                                     ifelse(tidy_results$p.value < pval_cutoff, "sig", "ns"))
+  tidy_results$p.format <- ifelse(is.na(tidy_results$p.value), NA,
+                                  ifelse(tidy_results$p.value < 0.001, "<0.001",
+                                         format(round(tidy_results$p.value, 3), nsmall = 3)))
+
+  # create a unique row label (term + trait) so multiple traits/rows do not overlap
+  tidy_results$row_label <- paste0(tidy_results$term,
+                                   ifelse(is.na(tidy_results$trait) | tidy_results$trait == "", "",
+                                          paste0(" (", tidy_results$trait, ")")))
+  tidy_results$row_label <- factor(tidy_results$row_label, levels = rev(unique(tidy_results$row_label)))
+
+  # compute x-range and a position for p-value text to the right of the CIs
+  x_max <- max(tidy_results$ci.high, tidy_results$estimate, na.rm = TRUE)
+  x_min <- min(tidy_results$ci.low, tidy_results$estimate, na.rm = TRUE)
+  x_range <- ifelse(is.finite(x_max - x_min) && (x_max - x_min) > 0, x_max - x_min, 1)
+  pval_x <- x_max + 0.06 * x_range
+
+  p <- ggplot2::ggplot(tidy_results, ggplot2::aes(x = estimate, y = row_label, colour = trait)) +
+    ggplot2::geom_vline(xintercept = 0, linetype = "dashed", colour = "gray60") +
+    ggplot2::geom_errorbarh(ggplot2::aes(xmin = ci.low, xmax = ci.high), height = 0.25, size = 0.8) +
+    ggplot2::geom_point(ggplot2::aes(shape = signif_flag), size = 3, stroke = 1) +
+    ggplot2::scale_shape_manual(values = c("sig" = 19, "ns" = 1), na.value = 1, guide = "none") +
+    ggplot2::geom_text(ggplot2::aes(x = pval_x, label = p.format), hjust = 0, colour = "black", size = 3, show.legend = FALSE) +
+    ggplot2::labs(x = "Estimate", y = NULL, colour = "Trait") +
+    ggplot2::coord_cartesian(xlim = c(x_min - 0.06 * x_range, pval_x + 0.06 * x_range)) +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(axis.text.y = ggplot2::element_text(size = 10),
+                   legend.position = "right")
 
   return(p)
 }
