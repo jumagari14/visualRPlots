@@ -21,6 +21,7 @@ Imports:
     ggpubr,
     ggrepel,
     M3C,
+    magrittr,
     rstatix,
     scales,
     tidyr

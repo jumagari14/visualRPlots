@@ -804,8 +804,8 @@ arrange_plots <- function(plot_list, ncol = 4, nrow = 6, labels = "AUTO",
 #' @return A list invisibly containing pheatmap output (gtable and components).
 #' @export
 #' @examples
-#' 
-#' 
+#'
+#'
 #' # From a matrix
 #' \dontrun{
 #' m <- matrix(rnorm(100), nrow=10)
