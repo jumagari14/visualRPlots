@@ -169,13 +169,14 @@ plot_boxplot_stats <- function(data, x_var, y_var, parametric = NULL,
         ggplot2::theme(legend.position = "none") +
         ggplot2::scale_color_manual(values = color_points, guide = "none")
     } else {
+      color_points <- colorspace::darken(RColorBrewer::brewer.pal(name = color_palette,n = nlevels(data_prep[,x_var_clean])),0.2)
       p <- ggpubr::ggboxplot(data_prep, x = x_var_clean, y = y_var_clean,
                              palette = color_palette, add = "jitter",
                              fill = x_var_clean, ylab = y_var,
                              add.params = list(color = x_var_clean, alpha = point_alpha)) +
         ggpubr::theme_pubr() +
         ggplot2::theme(legend.position = "none") +
-        ggplot2::scale_color_brewer(palette = color_palette, guide = "none")
+        ggplot2::scale_color_manual(values = color_points, guide = "none")
     }
   } else {
     p <- ggpubr::ggboxplot(data_prep, x = x_var_clean, y = y_var_clean,
@@ -187,9 +188,10 @@ plot_boxplot_stats <- function(data, x_var, y_var, parametric = NULL,
 
   # Add statistical annotations
   if (show_posthoc && is_multivariate && !is.null(test_results$posthoc)) {
-    p <- add_posthoc_annotations(p, data_prep, x_var_clean, y_var_clean,
-                                   test_results$posthoc, parametric,
-                                   show_symbols, step_increase)
+    p <- add_posthoc_annotations(plot = p, data = data_prep, x_var = x_var_clean, y_var = y_var_clean,
+                                  posthoc_results = test_results$posthoc, contrastCol =  "Comparison",
+                                  pval_column = "p.adj", label_format = "symbol",
+                                  step_increase =  step_increase)
   } else if (!show_posthoc) {
     label_format <- if (show_symbols) "p.signif" else "p.format"
     symnum_args <- if (show_symbols) {
@@ -239,9 +241,8 @@ plot_boxplot_stats <- function(data, x_var, y_var, parametric = NULL,
 #' @return A ggplot2 object with annotations added
 #' @export
 add_posthoc_annotations <- function(plot, data, x_var, y_var, posthoc_results,
-                                    pval_column = "p.adj", group_var = NULL,
-                                    step_increase = 0.03, tip_length = 0.01,
-                                    label_format = "symbol",
+                                    contrastCol = "comparison", pval_column = "p.adj", group_var = NULL,
+                                    step_increase = 0.03, tip_length = 0.01,label_format = "symbol", sepCharacter = "-",
                                     significance_cutoffs = c(0, 0.001, 0.01, 0.05, Inf),
                                     significance_symbols = c("***", "**", "*", "ns")) {
   # Input validation
@@ -256,9 +257,9 @@ add_posthoc_annotations <- function(plot, data, x_var, y_var, posthoc_results,
   }
 
   return(.add_posthoc_annotations_internal(plot, data, x_var, y_var,
-                                           posthoc_results, pval_column,
+                                           posthoc_results, contrastCol, pval_column,
                                            group_var, step_increase,
-                                           tip_length, label_format,
+                                           tip_length, label_format, sepCharacter,
                                            significance_cutoffs,
                                            significance_symbols))
 }
@@ -1049,13 +1050,13 @@ getClusteredHeatmap <- function(inFile,
 # Internal function to calculate summary statistics
 .calculate_summary_stats <- function(data, x_var, y_var) {
   summary_stats <- data %>%
-    dplyr::group_by(!!sym(x_var)) %>%
+    dplyr::group_by(!!x_var) %>%
     dplyr::summarise(
-      Mean = mean(!!sym(y_var), na.rm = TRUE),
-      Median = median(!!sym(y_var), na.rm = TRUE),
-      SD = sd(!!sym(y_var), na.rm = TRUE),
-      Q1 = quantile(!!sym(y_var), 0.25, na.rm = TRUE, type = 5),
-      Q3 = quantile(!!sym(y_var), 0.75, na.rm = TRUE, type = 5),
+      Mean = mean(!!y_var, na.rm = TRUE),
+      Median = median(!!y_var, na.rm = TRUE),
+      SD = sd(!!y_var, na.rm = TRUE),
+      Q1 = quantile(!!y_var, 0.25, na.rm = TRUE, type = 5),
+      Q3 = quantile(!!y_var, 0.75, na.rm = TRUE, type = 5),
       N = dplyr::n(),
       .groups = "drop"
     )
@@ -1065,16 +1066,15 @@ getClusteredHeatmap <- function(inFile,
 
 # Internal function to add post-hoc annotations
 .add_posthoc_annotations_internal <- function(plot, data, x_var, y_var,
-                                              posthoc_results, pval_column,
+                                              posthoc_results, contrastCol, pval_column,
                                               group_var, step_increase,
-                                              tip_length, label_format,
-                                              significance_cutoffs,
-                                              significance_symbols) {
+                                              tip_length, label_format, sepCharacter,
+                                              significance_cutoffs,significance_symbols) {
   # Prepare posthoc data
   posthoc_prep <- posthoc_results %>%
-    tidyr::separate(!!sym("Comparison"), c("group1", "group2"),
-                    sep = " - ", remove = FALSE) %>%
-    dplyr::rename(p.adj = !!sym(pval_column), comparison = Comparison) %>%
+    tidyr::separate(!!contrastCol, c("group1", "group2"),
+                    sep = sepCharacter, remove = FALSE) %>%
+    dplyr::rename(p.adj = !!pval_column, comparison = !!contrastCol) %>%
     rstatix::add_significance(p.col = "p.adj",
                               cutpoints = significance_cutoffs,
                               symbols = significance_symbols) %>%
@@ -1086,38 +1086,35 @@ getClusteredHeatmap <- function(inFile,
 
   # Get y positions
   if (is.null(group_var)) {
-    y_pos <- rstatix::get_y_position(
+    posthoc_prep <- posthoc_prep %>% rstatix::add_y_position(
       data = data,
       formula = as.formula(paste(y_var, "~", x_var)),
       step.increase = step_increase
     )
   } else {
-    y_pos <- data %>%
+    posthoc_prep <- posthoc_prep %>%
       dplyr::rename("xVar" = !!sym(x_var)) %>%
       dplyr::group_by(xVar) %>%
-      rstatix::get_y_position(
+      rstatix::add_y_position(data = data,
         formula = as.formula(paste(y_var, "~", group_var)),
-        step.increase = step_increase
+        step.increase = step_increase,ref.group = xVar,stack = T
       )
   }
 
-  # Merge positions
-  posthoc_annot <- posthoc_prep %>%
-    dplyr::inner_join(y_pos, by = c("group1", "group2"))
 
   # Determine label column
   if (label_format == "symbol") {
     label_col <- "p.adj.signif"
     label_size <- 3.88
   } else {
-    posthoc_annot$p.adj <- format_pvalue(posthoc_annot$p.adj)
+    posthoc_prep$p.adj <- format_pvalue(posthoc_prep$p.adj)
     label_col <- "p.adj"
     label_size <- 2.8
   }
 
   # Add annotations
   plot <- plot + ggpubr::stat_pvalue_manual(
-    posthoc_annot,
+    posthoc_prep,
     label = label_col,
     hide.ns = TRUE,
     tip.length = tip_length,
