@@ -284,24 +284,27 @@ add_posthoc_annotations <- function(plot, data, x_var, y_var, posthoc_results,
 #'
 #' @examples
 #' \dontrun{
-#' plot_stacked_bar(data = my_data, x_var = "population",
-#'                  fill_var = "subtype",
+#' plot_stacked_bar(data = my_data, x = "population",
+#'                  fill = "subtype",
 #'                  color_palette = c("Type1" = "#345995", "Type2" = "#03CEA4"))
 #' }
-plot_stacked_bar <- function(data, x_var, fill_var,
+plot_stacked_bar <- function(data, x, fill,
                               color_palette = NULL, show_labels = TRUE,
                               label_size = 2.5) {
   # Input validation
   if (!is.data.frame(data)) {
     stop("'data' must be a data frame")
   }
-  if (!all(c(x_var, fill_var) %in% colnames(data))) {
-    stop("Both 'x_var' and 'fill_var' must be column names in 'data'")
+  if (!all(c(x, fill) %in% colnames(data))) {
+    stop("Both 'x' and 'fill' must be column names in 'data'")
+  }
+  if (is.numeric(data[[fill]])) {
+    data[[fill]] <- as.factor(data[[fill]])
   }
 
   # Prepare data
   data_prep <- data %>%
-    dplyr::rename("x_group" = !!x_var, "fill_group" = !!fill_var) %>%
+    dplyr::rename("x_group" = !!x, "fill_group" = !!fill) %>%
     dplyr::group_by(x_group) %>%
     dplyr::count(fill_group) %>%
     dplyr::mutate(percentage = n / sum(n) * 100,
@@ -328,7 +331,11 @@ plot_stacked_bar <- function(data, x_var, fill_var,
 
   # Add color palette
   if (!is.null(color_palette)) {
-    p <- p + ggplot2::scale_fill_manual(values = color_palette)
+    if (is.character(color_palette) && length(color_palette) == 1) {
+      p <- p + ggplot2::scale_fill_brewer(name = "", palette = color_palette)
+    } else if (is.character(color_palette) && length(color_palette) > 1) {
+      p <- p + ggplot2::scale_fill_manual(values = color_palette)
+    }
   }
 
   return(p)
@@ -561,16 +568,15 @@ plot_forest <- function(model_list, adjust_pvals = FALSE, pval_cutoff = 0.05,
 #' \dontrun{
 #' plot_correlation(data = my_data, x_var = "var1", y_var = "var2")
 #' }
-plot_correlation <- function(data, x_var, y_var, cor_method = "spearman",
-                             font_size = 10, show_cor = TRUE,
-                             smooth_method = "loess") {
+plot_correlation <- function(data, x, y, cor_method = "spearman",
+                             font_size = 10, show_cor = TRUE) {
 
   # Input validation
   if (!is.data.frame(data)) {
     stop("'data' must be a data frame")
   }
 
-  all_vars <- unique(c(x_var, y_var))
+  all_vars <- unique(c(x, y))
   if (!all(all_vars %in% colnames(data))) {
     stop("All specified variables must exist in 'data'")
   }
@@ -590,8 +596,8 @@ plot_correlation <- function(data, x_var, y_var, cor_method = "spearman",
 
   if (show_cor) {
     p <- ggpubr::ggscatter(data,
-                            x = make.names(y_var),
-                            y = make.names(x_var),
+                            x = make.names(y),
+                            y = make.names(x),
                             add = add_method,
                             add.params = list(color = "blue"),
                             cor.coef = TRUE,
