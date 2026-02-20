@@ -106,11 +106,13 @@ plot_sankey <- function(data, alluvium = "alluvium", x = "x",
 #'
 #' @examples
 #' \dontrun{
-#' result <- plot_boxplot_stats(data = my_data, x_var = "group",
-#'                               y_var = "value", show_posthoc = TRUE)
-#' print(result$plot)
+#' data(iris)
+#' irisDataPlot <- plot_boxplot_stats(data = iris, x = "Species", y = "Sepal.Length",
+#'                                    parametric = TRUE, add_points = TRUE,color_palette="Set3",
+#'                                    show_symbols = TRUE, show_posthoc = TRUE)
+#' print(irisDataPlot$plot)
 #' }
-plot_boxplot_stats <- function(data, x_var, y_var, parametric = NULL,
+plot_boxplot_stats <- function(data, x, y, parametric = NULL,
                                 add_points = TRUE, color_palette = "Set1",
                                 show_symbols = FALSE, show_posthoc = FALSE,
                                 step_increase = 0.03, point_alpha = 0.7,
@@ -119,16 +121,16 @@ plot_boxplot_stats <- function(data, x_var, y_var, parametric = NULL,
   if (!is.data.frame(data)) {
     stop("'data' must be a data frame")
   }
-  if (!all(c(x_var, y_var) %in% colnames(data))) {
-    stop("Both 'x_var' and 'y_var' must be column names in 'data'")
+  if (!all(c(x, y) %in% colnames(data))) {
+    stop("Both 'x' and 'y' must be column names in 'data'")
   }
 
   # Prepare variable names
-  x_var_clean <- make.names(x_var)
-  y_var_clean <- make.names(y_var)
+  x_var_clean <- make.names(x)
+  y_var_clean <- make.names(y)
 
   data_prep <- data %>%
-    dplyr::rename(!!x_var_clean := !!x_var, !!y_var_clean := !!y_var)
+    dplyr::rename(!!x_var_clean := !!x, !!y_var_clean := !!y)
 
   data_prep[[x_var_clean]] <- as.factor(data_prep[[x_var_clean]])
   data_prep[[y_var_clean]] <- as.numeric(data_prep[[y_var_clean]])
@@ -284,9 +286,9 @@ add_posthoc_annotations <- function(plot, data, x_var, y_var, posthoc_results,
 #'
 #' @examples
 #' \dontrun{
-#' plot_stacked_bar(data = my_data, x = "population",
-#'                  fill = "subtype",
-#'                  color_palette = c("Type1" = "#345995", "Type2" = "#03CEA4"))
+#' data(mtcars)
+#' plot_stacked_bar(data = mtcars, x = "cyl", fill = "am",
+#'                  color_palette="Set2")
 #' }
 plot_stacked_bar <- function(data, x, fill,
                               color_palette = NULL, show_labels = TRUE,
@@ -566,7 +568,9 @@ plot_forest <- function(model_list, adjust_pvals = FALSE, pval_cutoff = 0.05,
 #'
 #' @examples
 #' \dontrun{
-#' plot_correlation(data = my_data, x_var = "var1", y_var = "var2")
+#' data(iris)
+#' plot_correlation(data = iris, x = "Sepal.Length", y = "Petal.Length", 
+#'                  cor_method = "pearson")
 #' }
 plot_correlation <- function(data, x, y, cor_method = "spearman",
                              font_size = 10, show_cor = TRUE) {
