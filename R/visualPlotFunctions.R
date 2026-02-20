@@ -165,7 +165,7 @@ plot_boxplot_stats <- function(data, x, y, parametric = NULL,
       color_points <- colorspace::darken(color_palette, 0.2)
       p <- ggpubr::ggboxplot(data_prep, x = x_var_clean, y = y_var_clean,
                              palette = color_palette, add = "jitter",
-                             fill = x_var_clean, ylab = y_var,
+                             fill = x_var_clean, ylab = y,
                              add.params = list(color = x_var_clean, alpha = point_alpha)) +
         ggpubr::theme_pubr() +
         ggplot2::theme(legend.position = "none") +
@@ -174,7 +174,7 @@ plot_boxplot_stats <- function(data, x, y, parametric = NULL,
       color_points <- colorspace::darken(RColorBrewer::brewer.pal(name = color_palette,n = nlevels(data_prep[,x_var_clean])),0.2)
       p <- ggpubr::ggboxplot(data_prep, x = x_var_clean, y = y_var_clean,
                              palette = color_palette, add = "jitter",
-                             fill = x_var_clean, ylab = y_var,
+                             fill = x_var_clean, ylab = y,
                              add.params = list(color = x_var_clean, alpha = point_alpha)) +
         ggpubr::theme_pubr() +
         ggplot2::theme(legend.position = "none") +
@@ -183,7 +183,7 @@ plot_boxplot_stats <- function(data, x, y, parametric = NULL,
   } else {
     p <- ggpubr::ggboxplot(data_prep, x = x_var_clean, y = y_var_clean,
                            palette = color_palette, fill = x_var_clean,
-                           ylab = y_var) +
+                           ylab = y) +
       ggpubr::theme_pubr() +
       ggplot2::theme(legend.position = "none")
   }
