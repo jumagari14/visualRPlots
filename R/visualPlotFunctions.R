@@ -791,7 +791,6 @@ arrange_plots <- function(plot_list, ncol = 4, nrow = 6, labels = "AUTO",
 #'
 #' @param inFile A numeric matrix/data.frame or a character path to a tab-delimited file
 #'   (first column used as row names).
-#' @param figureName Character. Base name used when saving the figure (default: "clusteredHeatmap").
 #' @param annotationColumns Optional. Either a data.frame with rownames matching the
 #'   columns of the matrix, or a path to a tab-delimited file containing annotation
 #'   columns (header present, rownames in first column).
@@ -808,9 +807,8 @@ arrange_plots <- function(plot_list, ncol = 4, nrow = 6, labels = "AUTO",
 #' @param showAnnotColNames Logical. Show annotation column names (default: FALSE).
 #' @param figureWidth Numeric. Width in pixels when saving (default: 1125).
 #' @param figureHeight Numeric. Height in pixels when saving (default: 625).
-#' @param dpi Numeric. Resolution used when saving (default: 150).
-#' @param filename Optional. If provided, save the heatmap to this file. If NULL,
-#'   a file named paste0(figureName, ".png") will be written when saving.
+#' #' @param figureName Character. File name containing the heatmap (default: NULL, no file is saved).
+#' @param dpi Numeric. Resolution used when saving (default: 300).
 #'
 #' @return A list invisibly containing pheatmap output (gtable and components).
 #' @export
@@ -825,7 +823,6 @@ arrange_plots <- function(plot_list, ncol = 4, nrow = 6, labels = "AUTO",
 #' }
 #'
 getClusteredHeatmap <- function(inFile,
-                                 figureName = "clusteredHeatmap",
                                  annotationColumns = NULL,
                                  annotationColors = NULL,
                                  showColNames = FALSE,
@@ -837,8 +834,8 @@ getClusteredHeatmap <- function(inFile,
                                  showAnnotColNames = FALSE,
                                  figureWidth = 1125,
                                  figureHeight = 625,
-                                 dpi = 150,
-                                 filename = NULL) {
+                                 figureName = NULL,
+                                 dpi = 300) {
 
   if (!requireNamespace("pheatmap", quietly = TRUE)) {
     stop("Package 'pheatmap' is required for getClusteredHeatmap()")
@@ -946,9 +943,8 @@ getClusteredHeatmap <- function(inFile,
                                       silent = TRUE)
 
   # Save output if requested
-  if (!is.null(filename) || !is.null(figureName)) {
-    out_file <- filename
-    if (is.null(out_file)) out_file <- paste0(figureName, ".png")
+  if (!is.null(figureName)) {
+    out_file <- paste0(figureName, ".png")
     grDevices::png(filename = out_file, width = figureWidth, height = figureHeight, units = "px", res = dpi)
     grid::grid.newpage()
     grid::grid.draw(heatmapFigure$gtable)

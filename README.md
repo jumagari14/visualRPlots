@@ -1,67 +1,69 @@
----
-output: github_document
----
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.path = "man/figures/README-",
-  out.width = "100%"
-)
-```
 
 # visualRPlots R package
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
-visualRPlots is an R package that provides tools for creating visualizations. It is designed to be easy to use and flexible, allowing 
-users to create a wide variety of plots and charts from quantitative and qualitative data. The package includes functions for creating 
-scatter plots, line graphs, bar charts, and more, as well as tools for customizing the appearance of your plots.
+visualRPlots is an R package that provides tools for creating
+visualizations. It is designed to be easy to use and flexible, allowing
+users to create a wide variety of plots and charts from quantitative and
+qualitative data. The package includes functions for creating scatter
+plots, line graphs, bar charts, and more, as well as tools for
+customizing the appearance of your plots.
 
 ## Installation
 
 You can install the development version of visualRPlots like so:
 
-``` {r,echo=TRUE, results='hide', message=FALSE, warning=FALSE}
+``` r
  devtools::install_github("jumagari14/visualRPlots")
 ```
 
 ## Examples
 
-You can find below examples of basic visualizations that can be created using the visualRPlots package. For more detailed examples and documentation, 
-please refer to the package's GitHub repository:
+You can find below examples of basic visualizations that can be created
+using the visualRPlots package. For more detailed examples and
+documentation, please refer to the package’s GitHub repository:
 
 ### Boxplots comparing quantitative data across groups + statistical test
-```{r, message=FALSE, warning=FALSE}
+
+``` r
 library(visualRPlots)
 data(iris)
 irisDataPlot <- plot_boxplot_stats(data = iris, x = "Species", y = "Sepal.Length",
                            parametric = TRUE, add_points = TRUE,color_palette="Set3",
                            show_symbols = TRUE, show_posthoc = TRUE)
 print(irisDataPlot$plot)
-
 ```
 
+<img src="man/figures/README-unnamed-chunk-3-1.png" alt="" width="100%" />
+
 ### Scatter plot with regression line and confidence interval
-```{r, message=FALSE, warning=FALSE}
+
+``` r
 library(visualRPlots)
 data(iris)
 plot_correlation(data = iris, x = "Sepal.Length", y = "Petal.Length", cor_method = "pearson")
 ```
 
+<img src="man/figures/README-unnamed-chunk-4-1.png" alt="" width="100%" />
+
 ### Bar plot with error bars
-```{r, message=FALSE, warning=FALSE}
+
+``` r
 library(visualRPlots)
 data(mtcars)
 plot_stacked_bar(data = mtcars, x = "cyl", fill = "am", color_palette="Set2")
 ```
 
+<img src="man/figures/README-unnamed-chunk-5-1.png" alt="" width="100%" />
+
 ### Sankey / Alluvial plot
-```{r, message=FALSE, warning=FALSE}
+
+``` r
 library(visualRPlots)
 data(iris)
 # build a simple alluvial-style data.frame from the built-in `iris` dataset
@@ -73,8 +75,11 @@ sankey_data <- data.frame(
 plot_sankey(data = sankey_data, alluvium = "id", x = "timepoint", stratum = "outcome")
 ```
 
+<img src="man/figures/README-unnamed-chunk-6-1.png" alt="" width="100%" />
+
 ### Volcano plot
-```{r, message=FALSE, warning=FALSE}
+
+``` r
 library(visualRPlots)
 data(mtcars)
 # create a simple mock differential-expression table from `mtcars`
@@ -86,8 +91,11 @@ de_results <- data.frame(
 plot_volcano(data = de_results, pval_col = "pval", logfc_col = "log2fc", gene_col = "gene")
 ```
 
+<img src="man/figures/README-unnamed-chunk-7-1.png" alt="" width="100%" />
+
 ### Forest plot
-```{r, message=FALSE, warning=FALSE}
+
+``` r
 library(visualRPlots)
 data(mtcars)
 # fit a couple of simple linear models and visualize their coefficients
@@ -98,8 +106,11 @@ models <- list(
 plot_forest(models, adjust_pvals = F)
 ```
 
+<img src="man/figures/README-unnamed-chunk-8-1.png" alt="" width="100%" />
+
 ### Clustered heatmap
-```{r, message=FALSE, warning=FALSE}
+
+``` r
 library(visualRPlots)
 data(iris)
 # use the numeric columns of `iris` to make a small heatmap
@@ -107,3 +118,5 @@ m <- as.matrix(iris[, 1:4])
 rownames(m) <- paste0("sample", seq_len(nrow(m)))
 getClusteredHeatmap(m)
 ```
+
+<img src="man/figures/README-unnamed-chunk-9-1.png" alt="" width="100%" />
