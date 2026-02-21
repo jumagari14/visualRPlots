@@ -19,17 +19,21 @@ jobs:
       - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: latest
+          r-version: 4.4.2
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev pandoc
+          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev
 
       - name: Install R dependencies
-        run: |
-          install.packages(c("rmarkdown", "knitr", "devtools"))
-        shell: Rscript {0}
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::rmarkdown
+            any::knitr
+            any::devtools
+          install-pandoc: true
 
       - name: Knit README.Rmd
         run: |
