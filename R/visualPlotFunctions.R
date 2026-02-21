@@ -54,7 +54,7 @@ plot_sankey <- function(data, alluvium = "alluvium", x = "x",
     ggalluvial::geom_flow(stat = "flow", aes.flow = "backward", color = "darkgray") +
     ggalluvial::geom_stratum(width = 0.35) +
     ggplot2::geom_text(stat = ggalluvial::StatStratum,
-                          ggplot2::aes(label = paste0(after_stat(stratum))),
+                          ggplot2::aes(label = paste0(ggplot2::after_stat(stratum))),
                           size = text_size) +
     ggpubr::theme_pubr() +
     ggplot2::guides(fill = "none") +
@@ -569,7 +569,7 @@ plot_forest <- function(model_list, adjust_pvals = FALSE, pval_cutoff = 0.05,
 #' @examples
 #' \dontrun{
 #' data(iris)
-#' plot_correlation(data = iris, x = "Sepal.Length", y = "Petal.Length", 
+#' plot_correlation(data = iris, x = "Sepal.Length", y = "Petal.Length",
 #'                  cor_method = "pearson")
 #' }
 plot_correlation <- function(data, x, y, cor_method = "spearman",
