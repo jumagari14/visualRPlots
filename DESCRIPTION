@@ -2,7 +2,7 @@ Package: visualRPlots
 Title: Nice ggplot2-based functions for data representation
 Version: 1.0.0
 Authors@R: 
-    person("Garcia", "Juan Manuek", , "juan.garciai@outlook.com", role = c("aut", "cre"))
+    person("Garcia", "Juan Manuel", , "juan.garciai@outlook.com", role = c("aut", "cre"))
 Description: This ggplot2-based library contains several functions to be used 
 to generate plots of diverse data types. In addition, it also includes functions to 
 perform and represent results of Principal Component Analysis (PCA) and t-distributed
@@ -25,6 +25,7 @@ Imports:
     ggrepel,
     M3C,
     magrittr,
+    pheatmap,
     rstatix,
     scales,
     tidyr
