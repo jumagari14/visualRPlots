@@ -1,12 +1,15 @@
-Package: visualPlots
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Package: visualRPlots
+Title: Nice ggplot2-based functions for data representation
+Version: 1.0.0
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+    person("Garcia", "Juan Manuek", , "juan.garciai@outlook.com", role = c("aut", "cre"))
+Description: This ggplot2-based library contains several functions to be used 
+to generate plots of diverse data types. In addition, it also includes functions to 
+perform and represent results of Principal Component Analysis (PCA) and t-distributed
+stochastic neighbor embedding (t-SNE).
 License: MIT + file LICENSE
-URL: https://github.com/jumagari14/visualPlots
-BugReports: https://github.com/jumagari14/visualPlots/issues
+URL: https://github.com/jumagari14/visualRPlots
+BugReports: https://github.com/jumagari14/visualRPlots/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3

@@ -30,10 +30,10 @@ You can install the development version of visualRPlots like so:
 # devtools::install_github("jumagari14/visualRPlots")
 ```
 
-## Example
+## Examples
 
 You can find below examples of basic visualizations that can be created using the visualRPlots package. For more detailed examples and documentation, 
-please refer to the package's GitHub repository.:
+please refer to the package's GitHub repository:
 
 ### Boxplots comparing quantitative data across groups + statistical test
 ```{r}
@@ -66,9 +66,9 @@ library(visualRPlots)
 data(iris)
 # build a simple alluvial-style data.frame from the built-in `iris` dataset
 sankey_data <- data.frame(
-  id = seq_len(nrow(iris)),
+  id = rep(seq_len(nrow(iris)/2),2),
   timepoint = rep(c("T1", "T2"), length.out = nrow(iris)),
-  outcome = ifelse(iris$Sepal.Length > mean(iris$Sepal.Length), "High", "Low")
+  outcome = ifelse(runif(nrow(iris),0,1)>0.5, "High", "Low")
 )
 plot_sankey(data = sankey_data, alluvium = "id", x = "timepoint", stratum = "outcome")
 ```
