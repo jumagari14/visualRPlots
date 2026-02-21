@@ -13,18 +13,18 @@ knitr::opts_chunk$set(
 )
 ```
 
-# visualPlots R package
+# visualRPlots R package
 
 <!-- badges: start -->
 <!-- badges: end -->
 
-visualPlots is an R package that provides tools for creating visualizations. It is designed to be easy to use and flexible, allowing 
+visualRPlots is an R package that provides tools for creating visualizations. It is designed to be easy to use and flexible, allowing 
 users to create a wide variety of plots and charts from quantitative and qualitative data. The package includes functions for creating 
 scatter plots, line graphs, bar charts, and more, as well as tools for customizing the appearance of your plots.
 
 ## Installation
 
-You can install the development version of visualPlots like so:
+You can install the development version of visualRPlots like so:
 
 ``` {r}
 # devtools::install_github("jumagari14/visualRPlots")
@@ -32,12 +32,12 @@ You can install the development version of visualPlots like so:
 
 ## Example
 
-You can find below examples of basic visualizations that can be created using the visualPlots package. For more detailed examples and documentation, 
+You can find below examples of basic visualizations that can be created using the visualRPlots package. For more detailed examples and documentation, 
 please refer to the package's GitHub repository.:
 
 ### Boxplots comparing quantitative data across groups + statistical test
 ```{r}
-# library(visualPlots)
+library(visualRPlots)
 data(iris)
 irisDataPlot <- plot_boxplot_stats(data = iris, x = "Species", y = "Sepal.Length",
                            parametric = TRUE, add_points = TRUE,color_palette="Set3",
@@ -47,16 +47,63 @@ print(irisDataPlot$plot)
 ```
 ### Scatter plot with regression line and confidence interval
 ```{r}
-# library(visualPlots)
+library(visualRPlots)
 data(iris)
 plot_correlation(data = iris, x = "Sepal.Length", y = "Petal.Length", 
                 cor_method = "pearson")
 ```
 ### Bar plot with error bars
 ```{r}
-# library(visualPlots)
+library(visualRPlots)
 data(mtcars)
 plot_stacked_bar(data = mtcars, x = "cyl", fill = "am", 
                 color_palette="Set2")
 ```
 
+### Sankey / Alluvial plot
+```{r}
+library(visualRPlots)
+data(iris)
+# build a simple alluvial-style data.frame from the built-in `iris` dataset
+sankey_data <- data.frame(
+  id = seq_len(nrow(iris)),
+  timepoint = rep(c("T1", "T2"), length.out = nrow(iris)),
+  outcome = ifelse(iris$Sepal.Length > mean(iris$Sepal.Length), "High", "Low")
+)
+plot_sankey(data = sankey_data, alluvium = "id", x = "timepoint", stratum = "outcome")
+```
+
+### Volcano plot
+```{r}
+library(visualRPlots)
+data(mtcars)
+# create a simple mock differential-expression table from `mtcars`
+de_results <- data.frame(
+  gene = rownames(mtcars),
+  pval = runif(nrow(mtcars), 0, 0.1),
+  log2fc = rnorm(nrow(mtcars), 0, 1)
+)
+plot_volcano(data = de_results, pval_col = "pval", logfc_col = "log2fc", gene_col = "gene")
+```
+
+### Forest plot
+```{r}
+library(visualRPlots)
+data(mtcars)
+# fit a couple of simple linear models and visualise their coefficients
+models <- list(
+  model1 = lm(mpg ~ wt, data = mtcars),
+  model2 = lm(mpg ~ hp, data = mtcars)
+)
+plot_forest(models, adjust_pvals = TRUE)
+```
+
+### Clustered heatmap
+```{r}
+library(visualRPlots)
+data(iris)
+# use the numeric columns of `iris` to make a small heatmap
+m <- as.matrix(iris[, 1:4])
+rownames(m) <- paste0("sample", seq_len(nrow(m)))
+getClusteredHeatmap(m)
+```

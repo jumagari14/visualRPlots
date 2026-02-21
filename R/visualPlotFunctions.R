@@ -53,7 +53,7 @@ plot_sankey <- function(data, alluvium = "alluvium", x = "x",
                                      label = stratum, fill = stratum)) +
     ggalluvial::geom_flow(stat = "flow", aes.flow = "backward", color = "darkgray") +
     ggalluvial::geom_stratum(width = 0.35) +
-    ggalluvial::geom_text(stat = "stratum",
+    ggplot2::geom_text(stat = "stratum",
                           ggplot2::aes(label = paste0(after_stat(stratum))),
                           size = text_size) +
     ggpubr::theme_pubr() +
@@ -955,7 +955,7 @@ getClusteredHeatmap <- function(inFile,
     grDevices::dev.off()
   }
 
-  invisible(heatmapFigure)
+  return(heatmapFigure)
 }
 
 # ============================================================================
