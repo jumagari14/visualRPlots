@@ -4,9 +4,9 @@ Version: 1.0.0
 Authors@R: 
     person("Garcia", "Juan Manuel", , "juan.garciai@outlook.com", role = c("aut", "cre"))
 Description: This ggplot2-based library contains several functions to be used 
-to generate plots of diverse data types. In addition, it also includes functions to 
-perform and represent results of Principal Component Analysis (PCA) and t-distributed
-stochastic neighbor embedding (t-SNE).
+    to generate plots of diverse data types. In addition, it also includes functions to 
+    perform and represent results of Principal Component Analysis (PCA) and t-distributed
+    stochastic neighbor embedding (t-SNE).
 License: MIT + file LICENSE
 URL: https://github.com/jumagari14/visualRPlots
 BugReports: https://github.com/jumagari14/visualRPlots/issues
@@ -26,6 +26,7 @@ Imports:
     M3C,
     magrittr,
     pheatmap,
+    RColorBrewer,
     rstatix,
     scales,
     tidyr

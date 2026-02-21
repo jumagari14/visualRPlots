@@ -27,7 +27,7 @@ scatter plots, line graphs, bar charts, and more, as well as tools for customizi
 You can install the development version of visualRPlots like so:
 
 ``` {r}
-# devtools::install_github("jumagari14/visualRPlots")
+ devtools::install_github("jumagari14/visualRPlots")
 ```
 
 ## Examples
