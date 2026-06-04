@@ -225,26 +225,81 @@ plot_boxplot_stats <- function(data, x, y, parametric = NULL,
 #' Add Post-hoc Statistical Annotations to Plot
 #'
 #' Adds post-hoc pairwise comparison annotations to an existing ggplot object.
+#' Supports two comparison modes:
+#' \itemize{
+#'   \item \strong{Within-x} (default): compares groups within the same x position
+#'     (e.g., different fill/color levels at the same x category).
+#'   \item \strong{Cross-x}: compares the same fill/color group across different x
+#'     positions. Activate by supplying \code{fill_var} and \code{fill_group_col}.
+#'     The bracket is drawn between the dodged positions of the shared fill group
+#'     at each x category, spanning any intermediate categories.
+#' }
 #'
 #' @param plot A ggplot2 object
 #' @param data A data frame containing the data
-#' @param x_var Character string. Column name for the grouping variable
-#' @param y_var Character string. Column name for the numeric variable
+#' @param x_var Character string. Column name for the grouping variable (x-axis)
+#' @param y_var Character string. Column name for the numeric variable (y-axis)
 #' @param posthoc_results Data frame. Results from post-hoc tests with columns:
-#'   'group1', 'group2', and a p-value column
+#'   a contrast/comparison column and a p-value column
+#' @param contrastCol Character string. Column in \code{posthoc_results} containing
+#'   pairwise contrast labels (default: \code{"comparison"})
 #' @param pval_column Character string. Name of the p-value column in posthoc_results
-#' @param group_var Optional. Character string. Column name for grouping within x_var
+#' @param group_var Optional. Character string. Column name for the fill/color grouping
+#'   variable used in within-x comparisons
+#' @param fill_var Optional. Character string. Column name in \code{data} for the
+#'   fill/dodge aesthetic variable. Providing this activates \strong{cross-x} mode.
+#' @param fill_group_col Optional. Character string. Column name in
+#'   \code{posthoc_results} that specifies the shared fill group level for each
+#'   cross-x comparison. Required when \code{fill_var} is set.
+#' @param dodge_width Numeric. The \code{position_dodge} width used in the plot
+#'   (default: 0.9). Only used in cross-x mode.
+#' @param y_nudge Numeric. Additional y-offset (in y-axis units) added to the
+#'   auto-computed bracket position. Useful to push cross-x brackets above existing
+#'   within-x annotations (default: 0).
 #' @param step_increase Numeric. Step increase for bracket positioning (default: 0.03)
 #' @param tip_length Numeric. Length of bracket tips (default: 0.01)
 #' @param label_format Character. Format for labels: "symbol" or "number" (default: "symbol")
+#' @param sepCharacter Character. Separator used to split contrast labels into
+#'   group1 / group2 (default: \code{"-"})
 #' @param significance_cutoffs Numeric vector. Cutoffs for significance symbols
 #' @param significance_symbols Character vector. Symbols corresponding to cutoffs
 #'
 #' @return A ggplot2 object with annotations added
+#'
+#' @section Cross-x usage:
+#' To annotate a comparison between, say, the \emph{IBS} subgroup at \emph{HC/IBSnc}
+#' and the \emph{IBS} subgroup at \emph{somatic}, prepare a \code{posthoc_results}
+#' data frame where:
+#' \itemize{
+#'   \item \code{contrastCol} contains \code{"HC/IBSnc - somatic"} (the two x levels)
+#'   \item \code{fill_group_col} contains \code{"IBS"} (the shared fill group)
+#' }
+#' Then call:
+#' \preformatted{
+#' add_posthoc_annotations(
+#'   plot        = p,
+#'   data        = df,
+#'   x_var       = "diagnosis",
+#'   y_var       = "LBP",
+#'   posthoc_results = cross_res,
+#'   contrastCol = "comparison",
+#'   fill_var    = "group",          # fill aesthetic column in data
+#'   fill_group_col = "fill_group",  # column in posthoc_results with fill level
+#'   dodge_width = 0.9,
+#'   y_nudge     = 5000              # push bracket above within-x annotations
+#' )
+#' }
+#'
 #' @export
 add_posthoc_annotations <- function(plot, data, x_var, y_var, posthoc_results,
-                                    contrastCol = "comparison", pval_column = "p.adj", group_var = NULL,
-                                    step_increase = 0.03, tip_length = 0.01,label_format = "symbol", sepCharacter = "-",
+                                    contrastCol = "comparison", pval_column = "p.adj",
+                                    group_var = NULL,
+                                    fill_var = NULL,
+                                    fill_group_col = NULL,
+                                    dodge_width = 0.9,
+                                    y_nudge = 0,
+                                    step_increase = 0.03, tip_length = 0.01,
+                                    label_format = "symbol", sepCharacter = "-",
                                     significance_cutoffs = c(0, 0.001, 0.01, 0.05, Inf),
                                     significance_symbols = c("***", "**", "*", "ns")) {
   # Input validation
@@ -256,6 +311,25 @@ add_posthoc_annotations <- function(plot, data, x_var, y_var, posthoc_results,
   }
   if (!is.data.frame(posthoc_results)) {
     stop("'posthoc_results' must be a data frame")
+  }
+  if (!is.null(fill_var)) {
+    if (!fill_var %in% colnames(data)) {
+      stop("'fill_var' must be a column name in 'data'")
+    }
+    if (is.null(fill_group_col)) {
+      stop("'fill_group_col' must be provided when 'fill_var' is specified")
+    }
+    if (!fill_group_col %in% colnames(posthoc_results)) {
+      stop("'fill_group_col' must be a column name in 'posthoc_results'")
+    }
+    # Cross-x comparison mode
+    return(.add_cross_x_annotations_internal(
+      plot, data, x_var, y_var,
+      posthoc_results, contrastCol, pval_column,
+      fill_var, fill_group_col, dodge_width, y_nudge,
+      step_increase, tip_length, label_format, sepCharacter,
+      significance_cutoffs, significance_symbols
+    ))
   }
 
   return(.add_posthoc_annotations_internal(plot, data, x_var, y_var,
@@ -1090,24 +1164,6 @@ getClusteredHeatmap <- function(inFile,
     return(plot)
   }
 
-  # Get y positions
-  if (is.null(group_var)) {
-    posthoc_prep <- posthoc_prep %>% rstatix::add_y_position(
-      data = data,
-      formula = as.formula(paste(y_var, "~", x_var)),
-      step.increase = step_increase
-    )
-  } else {
-    posthoc_prep <- posthoc_prep %>%
-      dplyr::rename("xVar" = !!sym(x_var)) %>%
-      dplyr::group_by(xVar) %>%
-      rstatix::add_y_position(data = data,
-        formula = as.formula(paste(y_var, "~", group_var)),
-        step.increase = step_increase,ref.group = xVar,stack = T
-      )
-  }
-
-
   # Determine label column
   if (label_format == "symbol") {
     label_col <- "p.adj.signif"
@@ -1118,14 +1174,165 @@ getClusteredHeatmap <- function(inFile,
     label_size <- 2.8
   }
 
-  # Add annotations
+  # Get y positions and make the plots accordingly
+  if (is.null(group_var)) {
+    posthoc_prep <- posthoc_prep %>% rstatix::add_y_position(
+      data = data,
+      formula = as.formula(paste(y_var, "~", x_var)),
+      step.increase = step_increase
+    )
+
+    plot <- plot + ggpubr::stat_pvalue_manual(
+      posthoc_prep,
+      label = label_col,
+      hide.ns = TRUE,
+      tip.length = tip_length,
+      step.increase = step_increase,
+      size = label_size
+    )
+
+  } else {
+    fakePosData <- data %>% dplyr::rename("xVar"=!!sym(x_var)) %>% group_by(xVar) %>%
+      wilcox_test(formula = as.formula(paste(y_var,group_var,sep = "~")),comparisons = Map(c,unique(posthoc_prep$group1),unique(posthoc_prep$group2))) %>%
+      add_xy_position(x = "xVar",group = group_var,step.increase = step_increase)
+
+
+    posthoc_prep <- posthoc_prep %>% inner_join(fakePosData[,c("xVar","group1","group2","y.position","xmin","xmax")],
+                                                by = join_by(!!x_var=="xVar","group1"=="group1","group2"=="group2")) %>%
+      mutate(x=(xmin+xmax)/2) %>% mutate(xmin=NULL,xmax=NULL)
+
+    plot <- plot + ggpubr::stat_pvalue_manual(
+      posthoc_prep,
+      label = label_col,
+      hide.ns = TRUE,
+      tip.length = tip_length,
+      step.increase = step_increase,
+      size = label_size,
+      remove.bracket = T,
+      x="x"
+    )
+
+  }
+
+  return(plot)
+}
+
+# Internal function for cross-x post-hoc annotations
+# (same fill group, different x positions)
+.add_cross_x_annotations_internal <- function(plot, data, x_var, y_var,
+                                               posthoc_results, contrastCol, pval_column,
+                                               fill_var, fill_group_col, dodge_width, y_nudge,
+                                               step_increase, tip_length, label_format, sepCharacter,
+                                               significance_cutoffs, significance_symbols) {
+  # Resolve ordered factor levels for x and fill variables
+  x_levels <- if (is.factor(data[[x_var]])) {
+    levels(data[[x_var]])
+  } else {
+    as.character(sort(unique(data[[x_var]])))
+  }
+
+  fill_levels <- if (is.factor(data[[fill_var]])) {
+    levels(data[[fill_var]])
+  } else {
+    as.character(sort(unique(data[[fill_var]])))
+  }
+
+  n_fill <- length(fill_levels)
+
+  # Map each x level to its integer plot position (1, 2, 3, ...)
+  x_pos_map <- stats::setNames(seq_along(x_levels), x_levels)
+
+  # Compute the dodge offset for each fill level.
+  # With position_dodge(width = dodge_width) and n_fill groups, the offset for
+  # the i-th fill level (0-indexed) is:
+  #   dodge_width * (i - (n_fill - 1) / 2) / n_fill
+  fill_offset_map <- stats::setNames(
+    dodge_width * (seq_len(n_fill) - 1 - (n_fill - 1) / 2) / n_fill,
+    fill_levels
+  )
+
+  # Prepare posthoc data: split contrast, filter to significant rows
+  posthoc_prep <- posthoc_results |>
+    tidyr::separate(
+      col      = !!contrastCol,
+      into     = c("group1", "group2"),
+      sep      = sepCharacter,
+      remove   = FALSE,
+      extra    = "merge"
+    ) |>
+    dplyr::mutate(
+      group1 = trimws(group1),
+      group2 = trimws(group2)
+    ) |>
+    dplyr::rename(p.adj = !!pval_column, comparison = !!contrastCol) |>
+    rstatix::add_significance(
+      p.col     = "p.adj",
+      cutpoints = significance_cutoffs,
+      symbols   = significance_symbols
+    ) |>
+    dplyr::filter(p.adj.signif != "ns")
+
+  if (nrow(posthoc_prep) == 0) {
+    return(plot)
+  }
+
+  # Compute bracket positions for each comparison
+  y_range <- diff(range(data[[y_var]], na.rm = TRUE))
+
+  posthoc_prep <- posthoc_prep |>
+    dplyr::rowwise() |>
+    dplyr::mutate(
+      fill_group_val = .data[[fill_group_col]],
+      dodge_offset   = fill_offset_map[fill_group_val],
+      x1_num         = x_pos_map[group1],
+      x2_num         = x_pos_map[group2],
+      xmin           = x1_num + dodge_offset,
+      xmax           = x2_num + dodge_offset,
+      y.position     = {
+        # Place bracket above the highest observed value across all x levels
+        # spanned by this comparison (inclusive)
+        min_idx    <- min(x1_num, x2_num, na.rm = TRUE)
+        max_idx    <- max(x1_num, x2_num, na.rm = TRUE)
+        x_spanned  <- x_levels[min_idx:max_idx]
+        max_y      <- max(data[[y_var]][data[[x_var]] %in% x_spanned], na.rm = TRUE)
+        max_y + step_increase * y_range + y_nudge
+      }
+    ) |>
+    dplyr::ungroup()
+
+  # Warn and drop rows where x levels were not matched
+  missing_groups <- unique(c(
+    posthoc_prep$group1[is.na(posthoc_prep$x1_num)],
+    posthoc_prep$group2[is.na(posthoc_prep$x2_num)]
+  ))
+  if (length(missing_groups) > 0) {
+    warning("The following group levels in 'posthoc_results' were not found in '",
+            x_var, "': ", paste(missing_groups, collapse = ", "))
+    posthoc_prep <- posthoc_prep |>
+      dplyr::filter(!is.na(x1_num) & !is.na(x2_num))
+  }
+
+  if (nrow(posthoc_prep) == 0) {
+    return(plot)
+  }
+
+  # Choose label column
+  if (label_format == "symbol") {
+    label_col  <- "p.adj.signif"
+    label_size <- 3.88
+  } else {
+    posthoc_prep$p.adj <- format_pvalue(posthoc_prep$p.adj)
+    label_col  <- "p.adj"
+    label_size <- 2.8
+  }
+
+  # Draw brackets using manual x positions
   plot <- plot + ggpubr::stat_pvalue_manual(
     posthoc_prep,
-    label = label_col,
-    hide.ns = TRUE,
-    tip.length = tip_length,
-    step.increase = step_increase,
-    size = label_size
+    label       = label_col,
+    hide.ns     = TRUE,
+    tip.length  = tip_length,
+    size        = label_size
   )
 
   return(plot)
