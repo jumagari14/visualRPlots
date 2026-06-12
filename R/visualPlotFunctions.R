@@ -192,7 +192,7 @@ plot_boxplot_stats <- function(data, x, y, parametric = NULL,
   if (show_posthoc && is_multivariate && !is.null(test_results$posthoc)) {
     p <- add_posthoc_annotations(plot = p, data = data_prep, x_var = x_var_clean, y_var = y_var_clean,
                                   posthoc_results = test_results$posthoc, contrastCol =  "Comparison",
-                                  pval_column = "p.adj", label_format = "symbol",
+                                  pval_column = "p.adj", label_format = "symbol",sepCharacter=" - ",
                                   step_increase =  step_increase)
   } else if (!show_posthoc) {
     label_format <- if (show_symbols) "p.signif" else "p.format"
