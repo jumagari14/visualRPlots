@@ -1180,7 +1180,7 @@ getClusteredHeatmap <- function(inFile,
       data = data,
       formula = as.formula(paste(y_var, "~", x_var)),
       step.increase = step_increase,
-      y.trans=function(x) x+quantile(x,0.75)*step.increase)
+      y.trans=function(x) x+quantile(x,0.75)*step_increase)
 
     plot <- plot + ggpubr::stat_pvalue_manual(
       posthoc_prep,
