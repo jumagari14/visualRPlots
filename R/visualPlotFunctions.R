@@ -192,7 +192,7 @@ plot_boxplot_stats <- function(data, x, y, parametric = NULL,
   if (show_posthoc && is_multivariate && !is.null(test_results$posthoc)) {
     p <- add_posthoc_annotations(plot = p, data = data_prep, x_var = x_var_clean, y_var = y_var_clean,
                                   posthoc_results = test_results$posthoc, contrastCol =  "Comparison",
-                                  pval_column = "p.adj", label_format = "symbol",sepCharacter=" - ",
+                                  pval_column = "p.adj", label_format = "symbol",sepCharacter="-",
                                   step_increase =  step_increase)
   } else if (!show_posthoc) {
     label_format <- if (show_symbols) "p.signif" else "p.format"
@@ -1130,13 +1130,18 @@ getClusteredHeatmap <- function(inFile,
 # Internal function to calculate summary statistics
 .calculate_summary_stats <- function(data, x_var, y_var) {
   summary_stats <- data %>%
-    dplyr::group_by(!!x_var) %>%
+    rename("xVar"=x_var,"yVar"=y_var) %>%
+    dplyr::group_by(xVar) %>%
     dplyr::summarise(
-      Mean = mean(!!y_var, na.rm = TRUE),
-      Median = median(!!y_var, na.rm = TRUE),
-      SD = sd(!!y_var, na.rm = TRUE),
-      Q1 = quantile(!!y_var, 0.25, na.rm = TRUE, type = 5),
-      Q3 = quantile(!!y_var, 0.75, na.rm = TRUE, type = 5),
+      Mean = mean(yVar, na.rm = TRUE),
+      Median = median(yVar, na.rm = TRUE),
+      SD = sd(yVar, na.rm = TRUE),
+      Q1 = quantile(yVar, 0.25, na.rm = TRUE, type = 5),
+      Q3 = quantile(yVar, 0.75, na.rm = TRUE, type = 5),
+      P05 = quantile(yVar, 0.05, na.rm = TRUE, type = 5),
+      P95 = quantile(yVar, 0.95, na.rm = TRUE, type = 5),
+      Min=min(yVar,na.rm = T),
+      Max=max(yVar,na.rm = T),
       N = dplyr::n(),
       .groups = "drop"
     )
@@ -1175,12 +1180,21 @@ getClusteredHeatmap <- function(inFile,
   }
 
   # Get y positions and make the plots accordingly
+
+  data <- data %>% filter(!!sym(x_var) %in% unique(c(posthoc_prep$group2,posthoc_prep$group1)))
+  data[,c(x_var)] <- droplevels(data[,c(x_var)])
+
   if (is.null(group_var)) {
-    posthoc_prep <- posthoc_prep %>% rstatix::add_y_position(
-      data = data,
-      formula = as.formula(paste(y_var, "~", x_var)),
-      step.increase = step_increase,
-      y.trans=function(x) x+quantile(x,0.75)*step.increase)
+    fakePosData <- data  %>%
+      wilcox_test(formula = as.formula(paste(y_var,x_var,sep = "~")),comparisons = Map(c,posthoc_prep$group1,posthoc_prep$group2)) %>%
+      add_xy_position(step.increase = step_increase)
+
+    posthoc_prep <- posthoc_prep %>% left_join(fakePosData[,c("group1","group2","y.position")],
+                                                by = join_by("group1"=="group1","group2"=="group2")) %>%
+      left_join(fakePosData[,c("group1","group2","y.position")],by=join_by("group1"=="group2","group2"=="group1"))
+
+    posthoc_prep <- posthoc_prep[,c(colSums(is.na(posthoc_prep)) < nrow(posthoc_prep))] %>%
+      rename_with(\(x) gsub(pattern = "(?<=y.position).+",replacement =  "",x = x, perl = T))
 
     plot <- plot + ggpubr::stat_pvalue_manual(
       posthoc_prep,
